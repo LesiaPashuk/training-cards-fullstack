@@ -1,1 +1,0 @@
-# training-cards-fullstack
