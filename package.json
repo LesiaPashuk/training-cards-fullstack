@@ -1,0 +1,21 @@
+{
+  "name": "training-cards",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:mongodb\" \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:mongodb": "brew services start mongodb-community && sleep 5",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && node index.js",
+    "build": "cd client && npm run build",
+    "start": "cd server && node index.js",
+    "stop:mongodb": "brew services stop mongodb-community"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
