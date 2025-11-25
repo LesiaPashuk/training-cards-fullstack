@@ -3,25 +3,28 @@ import { AddFlashCard } from "./AddFlashCard";
 import { useState } from "react";
 import axios from "axios";
 import { useOurContext } from "../contexts/ThemeContext";
+import { useAppDispatch } from "../store/hooks/redux";
+import { asyncCreateTopic } from "../store/reducers/slice/TopicSlice";
+import { asyncCreateCards } from "../store/reducers/slice/CardsSlice";
 
-//проблема добавления карточек 
 export const NewFlashCardSet = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [countCard, setCountCard] = useState<number[]>([1]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [cards, setCards] = useState<Map<number, { term: string; definition: string }>>(new Map([[1, { term: "", definition: "" }]]));
-  const [searchParams]= useSearchParams();
-  const {id}=useOurContext()
+  const [cards, setCards] = useState<
+    Map<number, { term: string; definition: string }>
+  >(new Map([[1, { term: "", definition: "" }]]));
+  const [searchParams] = useSearchParams();
+  const { id } = useOurContext();
   const handelOnChange = () => {
     const lastNumber = countCard.at(-1) ?? 0;
     setCountCard([...countCard, lastNumber + 1]);
   };
 
-  const titleHandelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(searchParams.get('folderID'), )
+  const titleHandelChange = (e: React.ChangeEvent<HTMLInputElement>) => {9
     setTitle(e.target.value);
-    console.log(cards)
   };
 
   const descriptionHandelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -47,54 +50,49 @@ export const NewFlashCardSet = () => {
   };
   const saveCardSetButton = async () => {
     try {
-      const folderID=searchParams.get('folderID')
-      if (!folderID) {
-        alert('Не указана папка для сохранения');
+      const folderID = searchParams.get("folderID");
+      if (cards.size === 0 || !folderID) {
+        alert("Добавьте хотя бы одну карточку");
         return;
       }
-      
-         if (!title.trim() || !description.trim()) {
-        alert('Заполните название и описание');
+      const cardsArray = Array.from(cards.entries()).map(([id, card]) => ({
+        positionInTheCollection: id,
+        term: card.term,
+        definition: card.definition,
+      }));
+
+
+      const responseTopic = await dispatch(
+        asyncCreateTopic({
+          title,
+          description,
+          folderID,
+          userID: id,
+        })
+      ).unwrap();
+
+      if (!responseTopic) {
+        console.log("не получилось создать топик");
         return;
       }
 
-      if (cards.size === 0 ) {
-        alert('Добавьте хотя бы одну карточку');
-        return;
-      }
-      const cardsArray= Array.from(cards.entries()).map(([id, card])=>({
-        positionInTheCollection:id, 
-        term:card.term, 
-        definition:card.definition
-      }))
-      console.log("front cardArray",cardsArray)
-      const resCreateTopic= await axios.post(`http://localhost:4000/api/homepage/newflashcardset/topic`, {
-        title,
-        description,
-        folderID, 
-        userID:id})
-      if(resCreateTopic.status !== 200 && resCreateTopic.status !== 201){
-        console.log('не получилось создать топик')
-        return 
-      }
+      const response = await dispatch(
+        asyncCreateCards({
+          cards: cardsArray,
+          folderID,
+          topicID: responseTopic._id,
+        })
+      ).unwrap();
 
-      console.log('Топик создан:', resCreateTopic.data);
-
-      const response = await axios.post(`http://localhost:4000/api/homepage/newflashcardset/cards`, {
-        cards:cardsArray, 
-        folderID, 
-        topicID:resCreateTopic.data._id})
-      if(response.status===200|| response.status === 201){
-        alert('set was created!!!!')
-         setTitle('');
-      setDescription('');
-     // setCards({});
-      navigate('/homepage');
+      if (response) {
+        alert("set was created!!!!");
+        setTitle("");
+        setDescription("");
+        navigate("/homepage");
       }
     } catch (err) {
-      console.error('Ошибка при создании набора карточек:', err);
-      // Можно добавить уведомление для пользователя
-      alert('Произошла ошибка при создании набора карточек');
+      console.error("Ошибка при создании набора карточек:", err);
+      alert("Произошла ошибка при создании набора карточек");
     }
   };
   return (
@@ -166,12 +164,10 @@ export const NewFlashCardSet = () => {
           </div>
         </main>
 
-        {/* Центрированная кнопка */}
+      
         <div className="flex justify-center px-4 sm:px-6 lg:px-8 pb-8">
           <div className="w-full max-w-xl flex justify-center gap-6">
             {" "}
-            {/* Увеличил gap до gap-6 */}
-            {/* Кнопка добавления карточки */}
             <button
               type="button"
               onClick={handelOnChange}

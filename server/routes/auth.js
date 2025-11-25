@@ -35,17 +35,15 @@ router.post('/register', async(req, res)=>{
             return res.status(400).json({message:"Пользователь с таким email уже существует "})
         }
         
-        const newUser=new User({username, email, password, folder:[]})
+        const newUser=new User({username, email, password})
         await newUser.save()
         
         const firstFolder= new Folder({
             folderName:"Default",
             privilege:false,
-            topic:[],
             user: newUser._id})
         await firstFolder.save()
-        newUser.folder.push(firstFolder._id);
-        await newUser.save()
+     
         const user = newUser.toObject()
         res.status(201).json(user) 
     }

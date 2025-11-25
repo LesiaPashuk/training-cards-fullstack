@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { memo } from 'react'
 
 import './App.css'
 import { AppRoutes } from './components/AppRoutes'
@@ -11,4 +12,4 @@ function App() {
   )
 }
 
-export default App
+export default  memo(App)

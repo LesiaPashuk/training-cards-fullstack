@@ -4,7 +4,7 @@ import { SignUp } from "./SignUp";
 import { LogIn } from "./LogIn";
 import {HomePage} from './HomePage'
 import { NewFlashCardSet } from "./NewFlashCardSet";
-export const AppRoutes =()=>{
+export const AppRoutes =React.memo(()=>{
     return (
         <Routes>
             <Route path='/' element={<LogIn></LogIn>}></Route>
@@ -13,4 +13,4 @@ export const AppRoutes =()=>{
             <Route path='/homepage/newflashcardset' element={<NewFlashCardSet></NewFlashCardSet>}></Route>
         </Routes>
     )
-}
+})

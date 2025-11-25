@@ -21,7 +21,7 @@ router.post('/homepage/:id', async(req, res)=>{
         if(!findUser){
             return res.status(400).json({message:"User isn't exist"})
         }
-        const userFolders= await Folder.find({_id:{ $in: findUser.folder}})
+        const userFolders= await Folder.find({user:id})
         const findFolder = userFolders.some(el=>el.folderName===nameFolder)
 
         if(findFolder){
@@ -30,12 +30,9 @@ router.post('/homepage/:id', async(req, res)=>{
         const newFolder=  new Folder({
             folderName:nameFolder,
             privilege:false, 
-            topic:[], 
             user:id
         })
         await newFolder.save()
-        findUser.folder.push(newFolder._id)
-        await  findUser.save()
        
 
        return res.status(200).json(newFolder)
@@ -58,7 +55,10 @@ router.get('/homepage/:id', async(req, res)=>{
         if(!user){
             return res.status(400).json({message:"user isnt founded"})
         }
-        const folders = await Folder.find({_id: {$in:user.folder}})
+        const folders = await Folder.find({user:id})
+        if(!folders){
+            return res.status(400).json({message:"folders arent founded"})
+        }
         return res.status(200).json(folders)
     }
     catch(err){

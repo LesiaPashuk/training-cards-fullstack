@@ -1,43 +1,45 @@
-import React, { useEffect } from "react"
-import axios from 'axios'
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { Link, useNavigate } from "react-router-dom"
+import React, { useEffect } from "react";
+import axios from "axios";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { Link, useNavigate } from "react-router-dom";
 import { useOurContext } from "../contexts/ThemeContext.tsx";
+import { asyncUserLoading } from "../store/reducers/slice/UserSlice";
+import { AppDispatch, RootState } from "../store/store.ts";
+import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch } from "../store/hooks/redux.ts";
+import {LogInFormDataType} from '../store/models/IUser'
+import { createSelector } from "@reduxjs/toolkit";
 
-type LogInFormDataType={
-    email:string, 
-    password:string,
-}
+export const LogIn = () => {
+  const dispatch = useAppDispatch();
+  const {  error } = useSelector(
+    (state: RootState) => state.user
+  );
+  const { setNewId } = useOurContext();
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LogInFormDataType>();
 
-
-export const LogIn =()=>{
-  const {id,setNewId}=useOurContext()
-    const navigate =useNavigate()
-    const{register, 
-        handleSubmit, 
-        formState:{errors}
-    }=useForm<LogInFormDataType>()
-
-    const onSubmit:SubmitHandler<LogInFormDataType>= async(data:LogInFormDataType)=>{
-        try{
-            const res =await axios.post('http://localhost:4000/api/', {
-                email:data.email, 
-                password:data.password,
-            })
-            if(res.status===200){
-             
-              setNewId(res.data._id)
-                navigate('/homepage')
-                
-            }
-            
-        }
-        catch(err){
-            console.error("Ошибка входа: ", err)
-            alert('Неверный email или пароль')
-        }
+  const onSubmit: SubmitHandler<LogInFormDataType> = async (
+    data: LogInFormDataType
+  ) => {
+    try {
+      const res = await dispatch(
+        asyncUserLoading({ email: data.email, password: data.password })
+      ).unwrap();
+      setNewId(res._id);
+      navigate("/homepage");
+      
+    } catch (err) {
+      console.error("Login failed:", err);
     }
-      return (
+  };
+  
+
+  return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#5e041f] via-[#c92e2e] to-[#ffbaba] p-4">
       <form
         onSubmit={handleSubmit(onSubmit)}
@@ -45,18 +47,21 @@ export const LogIn =()=>{
         style={{ minHeight: "400px", maxHeight: "600px" }}
       >
         <div className="flex flex-col items-center">
-          <h1 className="text-3xl font-extrabold mb-8 text-gray-800">Log in</h1>
+          <h1 className="text-3xl font-extrabold mb-2 text-gray-800">Log in</h1>
+        </div>
+        <div className="min-h-6">
+          {error && <span className="text-red-500 text-sm">{error}</span>}
         </div>
 
         <div className="mb-6">
           <input
             type="email"
             placeholder="Enter your email"
-             style={{
-                WebkitBoxShadow: "0 0 0 1000px #f3f4f6 inset",
-              }}
+            style={{
+              WebkitBoxShadow: "0 0 0 1000px #f3f4f6 inset",
+            }}
             className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-[#5e041f] focus:bg-white"
-      {...register("email", { required: true })}
+            {...register("email", { required: true })}
             {...register("email", {
               required: "Email обязателен",
               pattern: {
@@ -65,23 +70,29 @@ export const LogIn =()=>{
               },
             })}
           />
-          {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
+          {errors.email && (
+            <span className="text-red-500 text-sm">{errors.email.message}</span>
+          )}
         </div>
 
         <div className="mb-2">
           <input
             type="password"
-            placeholder="Enter your password"
-             style={{
-                WebkitBoxShadow: "0 0 0 1000px #f3f4f6 inset",
-              }}
+            placeholder={error.length > 0 ? error : "Enter your password"}
+            style={{
+              WebkitBoxShadow: "0 0 0 1000px #f3f4f6 inset",
+            }}
             className="w-full px-8 py-4 rounded-lg font-medium bg-gray-100 border border-gray-200 placeholder-gray-500 text-sm focus:outline-none focus:border-[#5e041f] focus:bg-white"
             {...register("password", {
               required: "Пароль обязателен",
               minLength: { value: 6, message: "Минимум 6 символов" },
             })}
           />
-          {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+          {errors.password && (
+            <span className="text-red-500 text-sm">
+              {errors.password.message}
+            </span>
+          )}
         </div>
 
         <button
@@ -124,7 +135,5 @@ export const LogIn =()=>{
         </p>
       </form>
     </div>
-  )
-
-
-}
+  );
+};
