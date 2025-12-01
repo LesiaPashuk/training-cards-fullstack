@@ -10,7 +10,7 @@ import { useAppDispatch } from "../store/hooks/redux.ts";
 import {LogInFormDataType} from '../store/models/IUser'
 import { createSelector } from "@reduxjs/toolkit";
 
-export const LogIn = () => {
+const LogIn = () => {
   const dispatch = useAppDispatch();
   const {  error } = useSelector(
     (state: RootState) => state.user
@@ -137,3 +137,4 @@ export const LogIn = () => {
     </div>
   );
 };
+export default LogIn

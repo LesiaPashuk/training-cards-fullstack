@@ -1,9 +1,7 @@
-import axios from "axios";
-import React, { ReactElement, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useOurContext } from "../contexts/ThemeContext";
-import { IFolder } from "../store/models/IFolder";
 import { useAppDispatch } from "../store/hooks/redux";
 import { useSelector } from "react-redux";
 import { RootState } from "../store/store";
@@ -22,10 +20,8 @@ import {
   asyncChangeTopicPrivilageStatus,
   asyncTopicsFromServer,
   changeSortOption,
-// sortFavorite,
   sortTopicByDateOldest,
   sortTopicByDateYoungest,
-//  topicPrivilegeStar,
 } from "../store/reducers/slice/TopicSlice";
 import { SortOptionType } from "../store/models/ITopic";
 
@@ -48,67 +44,83 @@ export function SelectFolder({
     modalRoot
   );
 }
-
-export const HomePage = React.memo(() => {
+ const HomePage = React.memo(() => {
   const { id } = useOurContext();
   const dispatch = useAppDispatch();
-  const { folders } = useSelector((state: RootState) => state.folders);
-  const { topics, sortOption } = useSelector(
-    (state: RootState) => state.topics
-  );
-  const { isModelOpen, option, selectFolderID } = useSelector(
-    (state: RootState) => state.homePageStore
-  );
   const navigate = useNavigate();
-
   const [inputFolderName, setInputFolderName] = useState("");
 
-  const handelInputFolderName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputFolderName(e.target.value);
-  };
-  const saveFolderChoose = () => {
+  const folders = useSelector((state: RootState) => state.folders.folders);
+  const topics = useSelector((state: RootState) => state.topics.topics);
+  const sortOption = useSelector((state: RootState) => state.topics.sortOption);
+  const isModelOpen = useSelector(
+    (state: RootState) => state.homePageStore.isModelOpen
+  );
+  const option = useSelector((state: RootState) => state.homePageStore.option);
+  const selectFolderID = useSelector(
+    (state: RootState) => state.homePageStore.selectFolderID
+  );
+
+  const handelInputFolderName = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setInputFolderName(e.target.value);
+    },
+    []
+  );
+
+  const saveFolderChoose = useCallback(() => {
     dispatch(closePortal());
     navigate(`/homepage/newflashcardset?folderID=${selectFolderID}`);
-  };
-  const fuoChangeSortOption = (e: React.ChangeEvent<HTMLSelectElement>) => {
-  
-    let value = e.target.value;
-    dispatch(asyncChangeSortOption({previousSortOption:sortOption, userID:id, sortOption:value as SortOptionType}));
-    switch (value) {
-      case "recentlyWatched":
-        break;
-      case "fromOldest":
-        dispatch(sortTopicByDateOldest());
-        break;
-      case "fromYoungest":
-        dispatch(sortTopicByDateYoungest());
-        break;
-      case "favorite":
-       // dispatch(sortFavorite())
-        break;
-      default:
+  }, [dispatch, navigate, selectFolderID]);
 
-    }
-  };
-  const folderFromServer = async () => {
+  const fuoChangeSortOption = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      let value = e.target.value;
+      dispatch(
+        asyncChangeSortOption({
+          previousSortOption: sortOption,
+          userID: id,
+          sortOption: value as SortOptionType,
+        })
+      );
+      switch (value) {
+        case "recentlyWatched":
+          break;
+        case "fromOldest":
+          dispatch(sortTopicByDateOldest());
+          break;
+        case "fromYoungest":
+          dispatch(sortTopicByDateYoungest());
+          break;
+        case "favorite":
+          // dispatch(sortFavorite())
+          break;
+        default:
+      }
+    },
+    [sortOption, dispatch, id]
+  );
+
+  const folderFromServer = useCallback(async () => {
     const resolve = await dispatch(asyncFoldersLoading(id)).unwrap();
     dispatch(changeSelectFolderID(resolve[0]._id));
-  };
-  const topicsFromServer = async () => {
+  }, [id, dispatch]);
+
+  const topicsFromServer = useCallback(async () => {
     console.log("сейчас будет диспач");
     const resolve = await dispatch(asyncTopicsFromServer(id)).unwrap();
     console.log(resolve);
-  };
-  
+  }, [id, dispatch]);
+
   useEffect(() => {
     topicsFromServer();
-  }, [id]);
+  }, [topicsFromServer]);
 
   useEffect(() => {
     folderFromServer();
-  }, [id, folders]);
+  }, [folderFromServer]);
 
-  const createNewFolder = async () => {
+  const createNewFolder = useCallback(async () => {
     try {
       const response = await dispatch(
         asyncFolderCreate({ folderName: inputFolderName, id })
@@ -123,13 +135,42 @@ export const HomePage = React.memo(() => {
     } catch (err) {
       console.error("ошибка создания папки", err);
     }
-  };
-  const createOrSaveChoose = () => {
+  }, [id, dispatch, navigate, inputFolderName]);
+
+  const createOrSaveChoose = useCallback(() => {
     return option === "exist" ? saveFolderChoose() : createNewFolder();
-  };
+  }, [option, saveFolderChoose, createNewFolder]);
+
+  const handelClosePortal = useCallback(
+    () => dispatch(closePortal()),
+    [dispatch]
+  );
+
+  const handleFolderSelectChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      dispatch(changeSelectFolderID(e.target.value));
+    },
+    [dispatch]
+  );
+
+  const handleOptionChange = useCallback(
+    (value: "create" | "exist") => {
+      dispatch(changeOption(value));
+    },
+    [dispatch]
+  );
+
+  const handleOpenPortal = useCallback(
+    () => dispatch(openPortal()),
+    [dispatch]
+  );
+  
+  const handleChangeTopicPrivilageStatus = useCallback(
+    (itemID: string) => dispatch(asyncChangeTopicPrivilageStatus(itemID)),
+    [dispatch]
+  );
   return (
     <>
-      {/* Красный фон для всей области за пределами страницы */}
       <div className="fixed inset-0 bg-[#a50808] -z-10"></div>
 
       <div className="min-h-screen bg-[#1a1616]">
@@ -168,12 +209,11 @@ export const HomePage = React.memo(() => {
               value={sortOption}
               className="px-4 py-2 border border-[#4c4848] rounded-lg focus:ring-2 focus:ring-[#a50808] focus:border-[#a50808] outline-none transition-all duration-200 bg-[#292626] text-white"
             >
-               <option value="recentlyWatched"> All </option>
-               <option value="favorite">Favorite</option>
+              <option value="recentlyWatched"> All </option>
+              <option value="favorite">Favorite</option>
               <option value="recentlyWatched">Recently watched</option>
               <option value="fromOldest">From oldest</option>
               <option value="fromYoungest">From youngest</option>
-              
             </select>
             <input
               type="text"
@@ -188,7 +228,7 @@ export const HomePage = React.memo(() => {
             {/*<Link to='newflashcardset'>*/}
 
             <div
-              onClick={() => dispatch(openPortal())}
+              onClick={handleOpenPortal}
               className="bg-gradient-to-r from-[#2a2626] to-[#1e1b1b] rounded-2xl shadow-lg p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 border border-dashed border-[#3a3535] hover:border-red-600 cursor-pointer group"
             >
               <div className="flex flex-col items-center justify-center h-40 text-white group-hover:text-red-400 transition-colors duration-200">
@@ -229,23 +269,37 @@ export const HomePage = React.memo(() => {
                     </p>
                   </div>
                   <div className="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button
-  className="flex items-center justify-center w-8 h-8 focus:outline-none"
-  aria-label={item.privilege ? "Убрать из избранного" : "Добавить в избранное"}
-  onClick={() => dispatch(asyncChangeTopicPrivilageStatus(item._id))}
->
-  {item.privilege ? (
-    // Заполненная звезда
-    <svg className="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M12 17.27L6.36 21l1.47-7.46L2 9.27l7.19-.63L12 2l2.81 6.64 7.19.63-5.83 5.27L17.64 21z" />
-    </svg>
-  ) : (
-    // Контур звезды
-    <svg className="w-6 h-6 text-yellow-500" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-      <path d="M12 2l2.81 6.64L22 9.27l-5.83 5.27L17.64 21 12 17.27 6.36 21l1.47-7.46L2 9.27l7.19-.63L12 2z" />
-    </svg>
-  )}
-</button>
+                    <button
+                      className="flex items-center justify-center w-8 h-8 focus:outline-none"
+                      aria-label={
+                        item.privilege
+                          ? "Убрать из избранного"
+                          : "Добавить в избранное"
+                      }
+                      onClick={() => handleChangeTopicPrivilageStatus(item._id)}
+                    >
+                      {item.privilege ? (
+                        // Заполненная звезда
+                        <svg
+                          className="w-6 h-6 text-yellow-500"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 17.27L6.36 21l1.47-7.46L2 9.27l7.19-.63L12 2l2.81 6.64 7.19.63-5.83 5.27L17.64 21z" />
+                        </svg>
+                      ) : (
+                        // Контур звезды
+                        <svg
+                          className="w-6 h-6 text-yellow-500"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M12 2l2.81 6.64L22 9.27l-5.83 5.27L17.64 21 12 17.27 6.36 21l1.47-7.46L2 9.27l7.19-.63L12 2z" />
+                        </svg>
+                      )}
+                    </button>
 
                     <button className="w-8 h-8 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors">
                       <svg
@@ -369,9 +423,7 @@ export const HomePage = React.memo(() => {
                 name="options"
                 value="create"
                 checked={option === "create"}
-                onChange={() => {
-                  dispatch(changeOption("create"));
-                }}
+                onChange={() => handleOptionChange("create")}
               />
               <span>New folder</span>
             </label>
@@ -382,9 +434,7 @@ export const HomePage = React.memo(() => {
               name="options"
               value="exist"
               checked={option === "exist"}
-              onChange={() => {
-                dispatch(changeOption("exist"));
-              }}
+              onChange={() => handleOptionChange("exist")}
             />
             <span>Existing folders</span>
           </label>
@@ -399,19 +449,11 @@ export const HomePage = React.memo(() => {
             />
           ) : (
             <select
-              onChange={(e) => {
-                dispatch(changeSelectFolderID(e.target.value));
-              }}
+              onChange={handleFolderSelectChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               {folders?.map((folder) => (
-                <option
-                  key={folder._id}
-                  value={folder._id}
-                  onClick={() => {
-                    dispatch(changeSelectFolderID(folder._id));
-                  }}
-                >
+                <option key={folder._id} value={folder._id}>
                   {folder.folderName}
                 </option>
               ))}
@@ -420,7 +462,7 @@ export const HomePage = React.memo(() => {
         </div>
         <div className="flex gap-4 mt-6">
           <button
-            onClick={() => dispatch(closePortal())}
+            onClick={handelClosePortal}
             className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
@@ -435,7 +477,6 @@ export const HomePage = React.memo(() => {
         </div>
       </SelectFolder>
     </>
-  
-)
-}
-)
+  );
+});
+export default HomePage

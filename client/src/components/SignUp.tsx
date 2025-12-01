@@ -9,7 +9,7 @@ import { useSelector } from "react-redux";
 import { asyncCreateUser } from "../store/reducers/slice/UserSlice";
 import { FormType } from "../store/models/IUser";
 
-export const SignUp = () => {
+ const SignUp = () => {
   const { setNewId } = useOurContext();
   const dispatch = useAppDispatch();
   const {
@@ -164,3 +164,4 @@ export const SignUp = () => {
     </div>
   );
 };
+export default SignUp

@@ -1,3 +1,4 @@
+import React, { useCallback } from "react"
 import { useState } from "react"
 
 type PropsType = {
@@ -6,28 +7,27 @@ type PropsType = {
   newInfoInCard:(id:number, term:string, definition:string)=>void
 }
 
-export const AddFlashCard = (props: PropsType) => {
+export const AddFlashCard = React.memo((props: PropsType) => {
   const [term, setTerm] = useState<string>('')
   const [definition, setDefinition] = useState<string>('')
   
-  const termHandelChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const termHandelChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTerm(e.target.value)
    props.newInfoInCard(props.id, e.target.value, definition)
-  }
+  },[props.id,props.newInfoInCard, definition])
   
-  const definitionHandelChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const definitionHandelChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setDefinition(e.target.value)
     props.newInfoInCard(props.id, term, e.target.value)
-  }
+  },[props.id, term, props.newInfoInCard])
   
-  const deleteCardButton = () => {
+  const deleteCardButton = useCallback(() => {
     props.deleteCardButton(props.id)
-  }
+  }, [props.deleteCardButton, props.id])
   
   return (
     <div className="bg-[#292626] rounded-lg w-full shadow-md p-8 hover:shadow-lg transition-all duration-200 border border-[#4c4848] hover:border-[#a50808]">
       <div className="flex flex-col h-full">
-        {/* Header with buttons */}
         <div className="flex justify-end mb-0 ">
           <div className="flex space-x-2">
             <button 
@@ -46,9 +46,7 @@ export const AddFlashCard = (props: PropsType) => {
           </div>
         </div>
         
-        {/* Term and Definition side by side */}
         <div className="flex flex-1 gap-6 mb-7">
-          {/* Term - Left Side */}
           <div className="flex-1">
             <label className="block text-gray-400 text-sm font-medium mb-2">Term</label>
             <textarea 
@@ -60,7 +58,6 @@ export const AddFlashCard = (props: PropsType) => {
             />
           </div>
           
-          {/* Definition - Right Side */}
           <div className="flex-1">
             <label className="block text-gray-400 text-sm font-medium mb-2">Definition</label>
             <textarea 
@@ -75,4 +72,4 @@ export const AddFlashCard = (props: PropsType) => {
       </div>
     </div>
   )
-}
+})

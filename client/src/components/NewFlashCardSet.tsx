@@ -1,54 +1,76 @@
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AddFlashCard } from "./AddFlashCard";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { useOurContext } from "../contexts/ThemeContext";
 import { useAppDispatch } from "../store/hooks/redux";
 import { asyncCreateTopic } from "../store/reducers/slice/TopicSlice";
 import { asyncCreateCards } from "../store/reducers/slice/CardsSlice";
+import React from "react";
 
-export const NewFlashCardSet = () => {
+ const NewFlashCardSet = React.memo(() => {
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
   const [countCard, setCountCard] = useState<number[]>([1]);
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [cards, setCards] = useState<
     Map<number, { term: string; definition: string }>
   >(new Map([[1, { term: "", definition: "" }]]));
+
   const [searchParams] = useSearchParams();
   const { id } = useOurContext();
-  const handelOnChange = () => {
-    const lastNumber = countCard.at(-1) ?? 0;
-    setCountCard([...countCard, lastNumber + 1]);
-  };
 
-  const titleHandelChange = (e: React.ChangeEvent<HTMLInputElement>) => {9
+  const handelOnChange = useCallback(() => {
+    setCountCard((prev)=>{
+       const lastNumber = prev.at(-1) ?? 0;
+       return [...prev, lastNumber]
+    })
+  },[]);
+
+  const titleHandelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setTitle(e.target.value);
-  };
+  },[]);
 
-  const descriptionHandelChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const descriptionHandelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setDescription(e.target.value);
-  };
+  },[]);
 
-  const deleteCardButton = (id: number) => {
-    const newCountCard = countCard.filter((el) => el !== id);
-    setCountCard(newCountCard);
-
+  const deleteCardButton = useCallback((id: number) => {
+    setCountCard((prev)=> prev.filter(el=>el!==id))
     setCards((prev) => {
       const newMap = new Map(prev);
       newMap.delete(id);
       return newMap;
     });
-  };
-  const newInfoInCard = (id: number, term: string, definition: string) => {
+  },[]);
+
+  const newInfoInCard = useCallback((id: number, term: string, definition: string) => {
     setCards((prev) => {
       const newMap = new Map(prev);
       newMap.set(id, { term: term, definition: definition });
       return newMap;
     });
-  };
-  const saveCardSetButton = async () => {
+  },[]);
+
+  useEffect(()=>{
+    setCards((prev)=>{
+      const newMap= new Map(prev)
+      let changed=false
+
+      countCard.forEach(id=>{
+        if(!newMap.has(id)){
+          newMap.set(id, {term:'', definition:''})
+          changed=true
+        }
+      })
+      return changed? newMap:prev
+    })
+  }, [countCard])
+
+  const saveCardSetButton = useCallback(async () => {
     try {
       const folderID = searchParams.get("folderID");
       if (cards.size === 0 || !folderID) {
@@ -94,7 +116,7 @@ export const NewFlashCardSet = () => {
       console.error("Ошибка при создании набора карточек:", err);
       alert("Произошла ошибка при создании набора карточек");
     }
-  };
+  },[cards, title, description, searchParams, id, dispatch, navigate]);
   return (
     <>
       <div className="fixed inset-0 bg-[#a50808] -z-10"></div>
@@ -147,20 +169,15 @@ export const NewFlashCardSet = () => {
 
         <main className="flex justify-center px-4 sm:px-6 lg:px-8 pb-8">
           <div className="w-full max-w-6xl space-y-6">
-            {countCard.map((el) => {
-              cards.has(el)
-                ? cards
-                : setCards(cards.set(el, { term: "", definition: "" }));
-
-              return (
+            {countCard.map((el) => (
                 <AddFlashCard
                   key={el}
                   id={el}
                   deleteCardButton={deleteCardButton}
                   newInfoInCard={newInfoInCard}
                 />
-              );
-            })}
+              )
+            )}
           </div>
         </main>
 
@@ -190,4 +207,5 @@ export const NewFlashCardSet = () => {
       </div>
     </>
   );
-};
+});
+export default NewFlashCardSet
