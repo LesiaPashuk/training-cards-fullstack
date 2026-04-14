@@ -13,7 +13,8 @@ connectBD()
 app.use(cors());
 
 app.use(express.json());
-app.use('/api', auth, folders, topic, card);
+app.use('/api', auth,  topic, card);
+app.use('/api/folders',folders)
 
 
 app.get('/api/test', (req, res)=>{

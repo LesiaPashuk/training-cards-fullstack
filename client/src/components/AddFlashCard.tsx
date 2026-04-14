@@ -25,6 +25,14 @@ export const AddFlashCard = React.memo((props: PropsType) => {
     props.deleteCardButton(props.id)
   }, [props.deleteCardButton, props.id])
   
+  const swapFields = useCallback(() => {
+    const t = term
+    const d = definition
+    setTerm(d)
+    setDefinition(t)
+    props.newInfoInCard(props.id, d, t)
+  }, [props.id, props.newInfoInCard, term, definition])
+  
   return (
     <div className="bg-[#292626] rounded-lg w-full shadow-md p-8 hover:shadow-lg transition-all duration-200 border border-[#4c4848] hover:border-[#a50808]">
       <div className="flex flex-col h-full">
@@ -39,7 +47,9 @@ export const AddFlashCard = React.memo((props: PropsType) => {
             </button>
             <button 
               type="button"
+              id="swap-button"
               className="w-8 h-8 bg-[#413d3d] rounded-full flex items-center justify-center text-gray-300 hover:bg-[#5a5555] hover:text-white transition-colors duration-200"
+              onClick={swapFields}
             >
               ↕
             </button>

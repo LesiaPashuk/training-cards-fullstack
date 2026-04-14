@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useOurContext } from "../contexts/ThemeContext";
@@ -45,9 +45,14 @@ export function SelectFolder({
   );
 }
  const HomePage = React.memo(() => {
-  const { id } = useOurContext();
+ 
+  
+  console.log("HomePage rendering");
+  const { id:contextID } = useOurContext(); 
+  const id = useMemo(()=>contextID, [contextID])
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const hasFetchedRef = useRef(false);
   const [inputFolderName, setInputFolderName] = useState("");
 
   const folders = useSelector((state: RootState) => state.folders.folders);
@@ -101,26 +106,28 @@ export function SelectFolder({
     [sortOption, dispatch, id]
   );
 
-  const folderFromServer = useCallback(async () => {
-    const resolve = await dispatch(asyncFoldersLoading(id)).unwrap();
-    dispatch(changeSelectFolderID(resolve[0]._id));
-  }, [id, dispatch]);
+  useEffect(()=>{
+    if(!id || hasFetchedRef.current) return 
 
-  const topicsFromServer = useCallback(async () => {
-    console.log("сейчас будет диспач");
-    const resolve = await dispatch(asyncTopicsFromServer(id)).unwrap();
-    console.log(resolve);
-  }, [id, dispatch]);
+    hasFetchedRef.current=true 
+    const fetchData = async()=>{
+      try{
+        const [ foldersReqest, topicRequest]= await Promise.all([dispatch(asyncFoldersLoading(id)).unwrap(),
+          dispatch(asyncTopicsFromServer(id)).unwrap()
+         ])
+         console.log('Data fetched successfully');
+         if(foldersReqest && foldersReqest.length>0){
+           dispatch(changeSelectFolderID(foldersReqest[0]._id));
+         }
+      }
+      catch(err){
+        console.error(err)
+      }
+    }
+    fetchData()
 
-  useEffect(() => {
-    topicsFromServer();
-  }, [topicsFromServer]);
-
-  useEffect(() => {
-    folderFromServer();
-  }, [folderFromServer]);
-
-  const createNewFolder = useCallback(async () => {
+  }, [id])
+ const createNewFolder = useCallback(async () => {
     try {
       const response = await dispatch(
         asyncFolderCreate({ folderName: inputFolderName, id })
@@ -129,7 +136,8 @@ export function SelectFolder({
       if (response) {
         dispatch(closePortal());
         setInputFolderName("");
-        folderFromServer();
+        new Promise((resolve)=>resolve(dispatch(asyncFoldersLoading(id)).unwrap()));
+        //folderFromServer();
         navigate(`/homepage/newflashcardset?folderID=${response._id}`);
       }
     } catch (err) {
@@ -169,6 +177,9 @@ export function SelectFolder({
     (itemID: string) => dispatch(asyncChangeTopicPrivilageStatus(itemID)),
     [dispatch]
   );
+  const navigateOnPracticePage=useCallback((setID:string)=>{
+    navigate(`/homepage/practice?setID=${setID}`)
+  }, [navigate])
   return (
     <>
       <div className="fixed inset-0 bg-[#a50808] -z-10"></div>
@@ -389,7 +400,7 @@ export function SelectFolder({
                     <div className="px-3 py-1 bg-red-900/50 rounded-full text-red-300 text-xs font-medium">
                       {item.privilege ? "Избранное" : "Активно"}
                     </div>
-                    <button className="w-9 h-9 bg-[#332e2e] hover:bg-[#403a3a] rounded-full flex items-center justify-center transition-colors group-hover:scale-110">
+                    <button onClick={()=>navigateOnPracticePage(item._id)} className="w-9 h-9 bg-[#332e2e] hover:bg-[#403a3a] rounded-full flex items-center justify-center transition-colors group-hover:scale-110">
                       <svg
                         className="w-5 h-5 text-gray-400 group-hover:text-red-400"
                         fill="none"

@@ -9,6 +9,8 @@ const LogInLazy = React.lazy(()=>import("./LogIn"))
 const SignUpLazy = React.lazy(()=>import("./SignUp"))
 const HomePageLazy = React.lazy(()=>import('./HomePage'))
 const NewFlashCardSetLazy = React.lazy(()=>import("./NewFlashCardSet"))
+const PracticeSetLazy= React.lazy(()=>import('./PracticeSet'))
+const FolderViewLazy= React.lazy(()=>import('./FolderView'))
 
 export const AppRoutes =React.memo(()=>{
     return (
@@ -17,6 +19,8 @@ export const AppRoutes =React.memo(()=>{
             <Route path='/register' element={<Suspense fallback={<Loader></Loader>}><SignUpLazy ></SignUpLazy></Suspense>}></Route>
             <Route path='/homepage' element={<Suspense fallback={<Loader></Loader>}><HomePageLazy></HomePageLazy></Suspense>}></Route>
             <Route path='/homepage/newflashcardset' element={<Suspense fallback={<Loader></Loader>}><NewFlashCardSetLazy></NewFlashCardSetLazy></Suspense>}></Route>
+            <Route path='/homepage/practice' element={<Suspense fallback={<Loader></Loader>}><PracticeSetLazy></PracticeSetLazy></Suspense>}></Route>
+            <Route path='/homepage/folder' element={<Suspense fallback={<Loader></Loader>}><FolderViewLazy></FolderViewLazy></Suspense>}></Route>
         </Routes>
     )
 })

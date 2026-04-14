@@ -77,4 +77,20 @@ router.patch('/homepage/cards', async(req, res)=>{
     res.status(500).json(err)
   }
 })
+router.get(`/homepage/practice-set`, async(req, res)=>{
+  try{
+    const { id, setID}=req.query;
+    if(!setID|| !id){
+      return res.status(404).json({message:"setID or id arent founded"})
+    }
+   
+    const cards= await Card.find({topic:setID})
+    
+    return res.status(200).json(cards)
+  }
+  catch(err){
+    console.error('Problem with find cards in set')
+    res.status(500).json(err)
+  }
+})
 export default router;

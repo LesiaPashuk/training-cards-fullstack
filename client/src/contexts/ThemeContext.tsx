@@ -1,5 +1,5 @@
 import axios from "axios";
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import Reacr, { createContext, useState, useEffect, useContext, ReactNode} from "react";
 
 interface ThemeContextType {
@@ -14,10 +14,12 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({children}:ThemeProviderProps){
-    const [id, setId]=useState<string>('');
-    const setNewId=(newId:string)=>{
+    const [id, setId]=useState<string>(()=>localStorage.getItem('userID')||"");
+    const setNewId=useCallback((newId:string)=>{
         setId(newId)
-    }
+        localStorage.setItem('userID',newId)
+    }, []) 
+    const value = useMemo(()=>({id, setNewId}),[id, setNewId])
     return (
     
     React.createElement(
