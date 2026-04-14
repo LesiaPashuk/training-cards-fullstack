@@ -1,5 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
 import User from '../models/User.js';
 import Folder from '../models/Folder.js';
 
@@ -12,10 +13,17 @@ router.post('/', async(req, res)=>{
         if(!email||!password){
             return res.status(400).json({message:'Email and password are required'})
         }
-        const findUser= await User.findOne({email, password})
+        const findUser= await User.findOne({email})
         if(!findUser){
             return res.status(400).json({ message: 'Неверный email или пароль' });
         }
+        
+        // Сравниваем введённый пароль с хешированным в БД
+        const isPasswordValid = await bcrypt.compare(password, findUser.password)
+        if(!isPasswordValid){
+            return res.status(400).json({ message: 'Неверный email или пароль' });
+        }
+        
         return res.status(200).json(findUser)
     }
     catch(err){
@@ -35,7 +43,10 @@ router.post('/register', async(req, res)=>{
             return res.status(400).json({message:"Пользователь с таким email уже существует "})
         }
         
-        const newUser=new User({username, email, password})
+        // Хешируем пароль перед сохранением (соль 10)
+        const hashedPassword = await bcrypt.hash(password, 10)
+        
+        const newUser=new User({username, email, password: hashedPassword})
         await newUser.save()
         
         const firstFolder= new Folder({

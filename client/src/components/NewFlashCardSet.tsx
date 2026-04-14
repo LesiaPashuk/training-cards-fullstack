@@ -26,7 +26,7 @@ import React from "react";
   const handelOnChange = useCallback(() => {
     setCountCard((prev)=>{
        const lastNumber = prev.at(-1) ?? 0;
-       return [...prev, lastNumber]
+       return [...prev, lastNumber + 1]
     })
   },[]);
 
@@ -94,7 +94,6 @@ import React from "react";
       ).unwrap();
 
       if (!responseTopic) {
-        console.log("не получилось создать топик");
         return;
       }
 
@@ -193,7 +192,6 @@ import React from "react";
               <span className="text-lg">+</span>
               <span>Add Card</span>
             </button>
-            {/* Кнопка сохранения - более интересная */}
             <button
               type="button"
               onClick={saveCardSetButton}

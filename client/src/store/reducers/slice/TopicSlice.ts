@@ -113,11 +113,7 @@ export const topicSlice = createSlice({
         let dateB = new Date(b.createdAt);
         return dateA.valueOf() - dateB.valueOf();
       });
-    } /*,
-    sortFavorite:(state)=>{
-      state.topics =state.topics.filter((topic)=>{ return topic.privilege})
-      console.log(state.topics)
-    }*/,
+    } 
   },
 
   extraReducers: (builder) => {

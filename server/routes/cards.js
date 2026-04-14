@@ -38,7 +38,7 @@ router.post("/homepage/newflashcardset/cards", async (req, res) => {
         card.term.trim() === "" ||
         card.definition.trim() === ""
       ) {
-        console.log("Пропущена карточка с пустыми полями:", card);
+
         continue;
       }
 
@@ -83,14 +83,39 @@ router.get(`/homepage/practice-set`, async(req, res)=>{
     if(!setID|| !id){
       return res.status(404).json({message:"setID or id arent founded"})
     }
-   
+
+    const allCards = await Card.find({})
+  
+    
     const cards= await Card.find({topic:setID})
+    return res.status(200).json(cards)
+  }
+  catch(err){
+    console.error('Problem with find cards in set:', err)
+    res.status(500).json(err)
+  }
+})
+
+router.get(`/homepage/all-cards`, async(req, res)=>{
+  try{
+    const { id }=req.query;
+    if(!id){
+      return res.status(404).json({message:"id arent founded"})
+    }
+    const userTopics = await Topic.find({user:id})
+    
+    if(userTopics.length === 0){
+      return res.status(200).json([])
+    }
+    const topicIds = userTopics.map(t => t._id)
+    const cards = await Card.find({topic: {$in: topicIds}})
     
     return res.status(200).json(cards)
   }
   catch(err){
-    console.error('Problem with find cards in set')
+    console.error('Problem with find all cards:', err)
     res.status(500).json(err)
   }
 })
+
 export default router;

@@ -47,13 +47,23 @@ export function SelectFolder({
  const HomePage = React.memo(() => {
  
   
-  console.log("HomePage rendering");
   const { id:contextID } = useOurContext(); 
   const id = useMemo(()=>contextID, [contextID])
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const hasFetchedRef = useRef(false);
   const [inputFolderName, setInputFolderName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!id) {
+      navigate('/');
+    }
+  }, [id, navigate]);
+
+  if (!id) {
+    return <div className="flex items-center justify-center min-h-screen text-white bg-[#1a1616]">Loading...</div>;
+  }
 
   const folders = useSelector((state: RootState) => state.folders.folders);
   const topics = useSelector((state: RootState) => state.topics.topics);
@@ -66,9 +76,38 @@ export function SelectFolder({
     (state: RootState) => state.homePageStore.selectFolderID
   );
 
+  const displayedTopics = useMemo(() => {
+    let filtered = topics;
+    
+    if (selectFolderID) {
+      const folder = folders.find((f) => f._id === selectFolderID);
+      filtered = filtered.filter(
+        (t) => (t.folder && t.folder._id === selectFolderID) ||
+          (t.folderName && Array.isArray(t.folderName) && t.folderName.includes(folder?.folderName || ''))
+      );
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((t) =>
+        t.topicname?.toLowerCase().includes(query) ||
+        t.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [topics, selectFolderID, folders, searchQuery]);
+
   const handelInputFolderName = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setInputFolderName(e.target.value);
+    },
+    []
+  );
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchQuery(e.target.value);
     },
     []
   );
@@ -115,7 +154,6 @@ export function SelectFolder({
         const [ foldersReqest, topicRequest]= await Promise.all([dispatch(asyncFoldersLoading(id)).unwrap(),
           dispatch(asyncTopicsFromServer(id)).unwrap()
          ])
-         console.log('Data fetched successfully');
          if(foldersReqest && foldersReqest.length>0){
            dispatch(changeSelectFolderID(foldersReqest[0]._id));
          }
@@ -137,7 +175,6 @@ export function SelectFolder({
         dispatch(closePortal());
         setInputFolderName("");
         new Promise((resolve)=>resolve(dispatch(asyncFoldersLoading(id)).unwrap()));
-        //folderFromServer();
         navigate(`/homepage/newflashcardset?folderID=${response._id}`);
       }
     } catch (err) {
@@ -178,7 +215,7 @@ export function SelectFolder({
     [dispatch]
   );
   const navigateOnPracticePage=useCallback((setID:string)=>{
-    navigate(`/homepage/practice?setID=${setID}`)
+   navigate(`/study/${setID}`)
   }, [navigate])
   return (
     <>
@@ -195,14 +232,18 @@ export function SelectFolder({
                     {" "}
                     New Flashcard set
                   </li>
-                  <li className="text-gray-300 hover:text-[#a50808] cursor-pointer font-medium transition-colors duration-200">
+                  <li className="text-gray-300 hover:text-[#a50808] cursor-pointer font-medium transition-colors duration-200" onClick={() => navigate('/homepage/test')}>
                     Test
                   </li>
                   <li className="text-gray-300 hover:text-[#a50808] cursor-pointer font-medium transition-colors duration-200">
-                    <select>
-                      <option key="null">Folder</option>
+                    <select
+                      value={selectFolderID || ""}
+                      onChange={handleFolderSelectChange}
+                      className="bg-[#292626] text-white border border-[#4c4848] rounded px-2 py-1"
+                    >
+                      <option key="null" value="">All folders</option>
                       {folders?.map((folder) => (
-                        <option key={folder._id} value={folder.folderName}>
+                        <option key={folder._id} value={folder._id}>
                           {folder.folderName}
                         </option>
                       ))}
@@ -229,6 +270,8 @@ export function SelectFolder({
             <input
               type="text"
               placeholder="Found my modules"
+              value={searchQuery}
+              onChange={handleSearchChange}
               className="flex-1 px-4 py-2 border border-[#4c4848] rounded-lg focus:ring-2 focus:ring-[#a50808] focus:border-[#a50808] outline-none transition-all duration-200 placeholder-[#a4a1a1] bg-[#292626] text-white"
             />
           </div>
@@ -265,10 +308,11 @@ export function SelectFolder({
             {/*</Link>*/}
 
             {}
-            {topics?.map((item) => (
+            {displayedTopics?.map((item) => (
               <div
                 key={item._id}
-                className="bg-gradient-to-r from-[#2a2626] to-[#1e1b1b] rounded-2xl shadow-lg p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 border border-[#3a3535] hover:border-red-600 group"
+                className="bg-gradient-to-r from-[#2a2626] to-[#1e1b1b] rounded-2xl shadow-lg p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 border border-[#3a3535] hover:border-red-600 group cursor-pointer"
+                onClick={()=>navigateOnPracticePage(item._id)}
               >
                 <div className="flex items-start justify-between mb-5">
                   <div>
@@ -290,7 +334,6 @@ export function SelectFolder({
                       onClick={() => handleChangeTopicPrivilageStatus(item._id)}
                     >
                       {item.privilege ? (
-                        // Заполненная звезда
                         <svg
                           className="w-6 h-6 text-yellow-500"
                           fill="currentColor"
@@ -299,7 +342,6 @@ export function SelectFolder({
                           <path d="M12 17.27L6.36 21l1.47-7.46L2 9.27l7.19-.63L12 2l2.81 6.64 7.19.63-5.83 5.27L17.64 21z" />
                         </svg>
                       ) : (
-                        // Контур звезды
                         <svg
                           className="w-6 h-6 text-yellow-500"
                           fill="none"

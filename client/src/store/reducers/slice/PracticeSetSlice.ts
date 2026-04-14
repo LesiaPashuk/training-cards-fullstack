@@ -5,6 +5,7 @@ import { PracticeSetState, RequestPracticeSetData } from '../../models/IPractice
 
 const initialState:PracticeSetState={
     cards:[], 
+    allCards:[],
     isLoading:false, 
     error:''
 }
@@ -12,6 +13,15 @@ const initialState:PracticeSetState={
 export const asyncCardsFromSetServer= createAsyncThunk('cards/getFromSet', async(data:RequestPracticeSetData, {rejectWithValue})=>{
     try {
         return await cardsApi.getFromSet(data)
+    }
+    catch(err){
+        return rejectWithValue(err.message)
+    }
+})
+
+export const asyncAllCardsFromServer= createAsyncThunk('cards/getAllCards', async(data:{id:string}, {rejectWithValue})=>{
+    try {
+        return await cardsApi.getAllUserCards(data.id)
     }
     catch(err){
         return rejectWithValue(err.message)
@@ -37,4 +47,19 @@ extraReducers:(builder)=>{
         state.isLoading=false, 
         state.error=action.payload as string
     })
+    .addCase(asyncAllCardsFromServer.pending, (state)=>{
+        state.isLoading= true, 
+        state.error=''
+    })
+    .addCase(asyncAllCardsFromServer.fulfilled, (state, action)=>{
+        state.isLoading= false, 
+        state.error='', 
+        state.allCards=action.payload
+    })
+    .addCase(asyncAllCardsFromServer.rejected, (state, action)=>{
+        state.isLoading=false, 
+        state.error=action.payload as string
+    })
 }})
+
+export default practiceSetSlice.reducer

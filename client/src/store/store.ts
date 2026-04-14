@@ -4,12 +4,14 @@ import foldersReducer from './reducers/slice/FolderSlice'
 import homePageReducer from './reducers/slice/HomePageSlice'
 import cardsReducer from './reducers/slice/CardsSlice'
 import topicReducer from './reducers/slice/TopicSlice'
+import practiceSetReducer from './reducers/slice/PracticeSetSlice'
 const rootReducer= combineReducers({
     user:userReducer,
     folders:foldersReducer,
     homePageStore:homePageReducer,
     cards:cardsReducer,
-    topics:topicReducer
+    topics:topicReducer,
+    practiceSet: practiceSetReducer
 })
 
 export const setupStore=()=>{

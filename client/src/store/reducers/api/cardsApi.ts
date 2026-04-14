@@ -13,5 +13,9 @@ export const cardsApi = {
     getFromSet:async(data:RequestPracticeSetData):Promise<ICard[]>=>{
         const response = await axios.get(`http://localhost:4000/api/homepage/practice-set`, {params:data})
         return response.data
+    },
+    getAllUserCards:async(userId:string):Promise<ICard[]>=>{
+        const response = await axios.get(`http://localhost:4000/api/homepage/all-cards`, {params:{id:userId}})
+        return response.data
     }
 }

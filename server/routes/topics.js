@@ -41,7 +41,6 @@ router.post('/homepage/newflashcardset/topic', async(req, res)=>{
 router.get('/homepage/newflashcardset/topic', async(req, res)=>{
     try{
         const userID=req.query.userID
-        console.log('полуичла данные с фронта вот например id', userID)
         if(!userID)
             return res.status(400).json({message:"userID was skipped"})
 
@@ -51,7 +50,6 @@ router.get('/homepage/newflashcardset/topic', async(req, res)=>{
         const topics = await Topic.find({folders:folderDefault._id})
         if(!topics)
             return res.status(400).json({message:"topics waren't founded"})
-        console.log("папки дефолт у пользователя",topics)
         return res.status(200).json(topics)
     }
     catch(err){
